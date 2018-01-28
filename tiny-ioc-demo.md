@@ -37,7 +37,13 @@
 4. 提出问题思路: 是什么/为什么/怎么工程实现/底层是如何实现/横向对比描述
 5. 根据问题的主线, 逐步手动实现一个spring IOC/DI/AOP基本功能
 
+分析Spring IOC 原理
+--
+关键字: 控制反转IOC/容器
 
+参考文档: [spring](https://www.ibm.com/developerworks/cn/java/wa-spring1/ "spring")
+
+![spring-framework](https://www.ibm.com/developerworks/cn/java/wa-spring1/spring_framework.gif "framework")
 
 
 
