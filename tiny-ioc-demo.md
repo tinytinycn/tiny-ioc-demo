@@ -43,8 +43,13 @@
 
 参考文档: [spring](https://www.ibm.com/developerworks/cn/java/wa-spring1/ "spring")
 
+框架图: 
+
 ![spring-framework](https://www.ibm.com/developerworks/cn/java/wa-spring1/spring_framework.gif "framework")
 
+涉及模块: 
+- 核心容器：核心容器提供 Spring 框架的基本功能。核心容器的主要组件是 BeanFactory，它是工厂模式的实现。BeanFactory 使用控制反转 （IOC） 模式将应用程序的配置和依赖性规范与实际的应用程序代码分开。
+- Spring 上下文：Spring 上下文是一个配置文件，向 Spring 框架提供上下文信息。Spring 上下文包括企业服务，例如 JNDI、EJB、电子邮件、国际化、校验和调度功能。
 
 
 
