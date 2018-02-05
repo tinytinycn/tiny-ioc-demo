@@ -6,7 +6,7 @@
 * 课题要求
 * 课题思路
 * 
-* spring ioc 原理
+* spring ioc 原理 - BeanFactroy源码分析
 * spring bean 创建和初始化
 * spring bean 生命周期
 * spring bean 延迟加载
@@ -37,12 +37,8 @@
 4. 提出问题思路: 是什么/为什么/怎么工程实现/底层是如何实现/横向对比描述
 5. 根据问题的主线, 逐步手动实现一个spring IOC/DI/AOP基本功能
 
-分析Spring IOC 原理
+Spring 框架
 --
-关键字: 控制反转IOC/容器
-
-参考文档: [spring](https://www.ibm.com/developerworks/cn/java/wa-spring1/ "spring")
-
 框架图: 
 
 ![spring-framework](https://www.ibm.com/developerworks/cn/java/wa-spring1/spring_framework.gif "framework")
@@ -52,6 +48,8 @@
 - Spring 上下文：Spring 上下文是一个配置文件，向 Spring 框架提供上下文信息。Spring 上下文包括企业服务，例如 JNDI、EJB、电子邮件、国际化、校验和调度功能。
 
 
+spring ioc 原理 - BeanFactroy源码分析
+--
 1. 阅读BeanFactory.java源码
 
 ![beanfactory-h.png](./readme-img/beanfactory-interface.png)
@@ -107,9 +105,9 @@ classPathXmlApplicationContext.java 继承图:
         }
     public ClassPathXmlApplicationContext(String[] configLocations, boolean refresh, ApplicationContext parent) throws BeansException {
             super(parent);
-            this.setConfigLocations(configLocations); //step into 3.3
+            this.setConfigLocations(configLocations);        //step into 3.3
             if (refresh) {
-                this.refresh(); //step into 3.4
+                this.refresh();                              //step into 3.4
             }
     
         }
@@ -181,8 +179,8 @@ classPathXmlApplicationContext.java 继承图:
     }
 
     protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
-        refreshBeanFactory(); // step into 3.4.1
-        ConfigurableListableBeanFactory beanFactory = getBeanFactory(); // step into 3.4.2
+        refreshBeanFactory();                                            // step into 3.4.1
+        ConfigurableListableBeanFactory beanFactory = getBeanFactory();  // step into 3.4.2
         if (logger.isDebugEnabled()) {
             logger.debug("Bean factory for " + getDisplayName() + ": " + beanFactory);
         }
@@ -222,7 +220,7 @@ classPathXmlApplicationContext.java 继承图:
     	}
 ```
 
-4.1 在返回beanFactory实例之前, 完成bean实例的加载, 实现beanFactory的管理.(追踪beanDefination)
+4.1 在返回beanFactory实例之前, 完成bean实例的加载, 实现了beanFactory的管理功能.(追踪beanDefination)
 
 AbstractXmlApplicationContext.java
 ```
@@ -239,7 +237,7 @@ AbstractXmlApplicationContext.java
         // Allow a subclass to provide custom initialization of the reader,
         // then proceed with actually loading the bean definitions.
         initBeanDefinitionReader(beanDefinitionReader);
-        loadBeanDefinitions(beanDefinitionReader);  //step into 4.2
+        loadBeanDefinitions(beanDefinitionReader);                      //step into 4.2
     }
 ```
 4.1.1 XmlBeanDefinitionReader.java 完成bean实例的注册
@@ -254,11 +252,11 @@ AbstractXmlApplicationContext.java
 
 ``` 
     protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) throws BeansException, IOException {
-        Resource[] configResources = getConfigResources(); //获取 3.3 加载的配置文件
+        Resource[] configResources = getConfigResources(); 
         if (configResources != null) {
             reader.loadBeanDefinitions(configResources);
         }
-        String[] configLocations = getConfigLocations();
+        String[] configLocations = getConfigLocations();  //获取 3.3 加载的配置文件
         if (configLocations != null) {
             reader.loadBeanDefinitions(configLocations);  // step into 4.2.1
         }
@@ -468,3 +466,37 @@ AbstractXmlApplicationContext.java
         }
     }
 ```
+
+BeanFactory的初始化分析:(大致如此, 个人不是特别详细)
+1. "容器"实现BeanFactory接口定义的getBean()方法, 获取"容器"中被管理的实例对象;
+2. "容器"继承DefaultListableBeanFactory类的beanDefinitionMap集合管理bean实例对象的信息; 实现BeanDefinitionRegistry接口的相关方法完成注册等操作;
+3. "容器"静态加载一些操作;
+4. "容器"构造初始化时, 完成配置文件的加载 和 完成内部bean factory的refresh()操作后, 返回beanFactory实例;
+bean factory的refresh() 分两步走: 
+4.1 保证容器只有一个的前提下, 完成 创建beanFactory, 初始化beanFactory(加载或注册配置文件中的bean实例*), 保证线程安全的前提下, 赋值;
+4.1.1 通过XmlBeanDefinitionReader对象, 加载beanDefinition;
+4.1.2 加载beanDefinition时, 通过DefaultBeanDefinitionDocumentReader对象, 解析xml;
+4.1.3 通过BeanDefinitionReaderUtils对象, 完成注册;
+4.2 保证线程安全的前提下, 获取beanFactory实例.
+
+设计接口和实现类:
+1. TinyBeanFactory接口类
+- Object getBean(String name)
+- <T> T getBean(String name, Class<T> c)
+- boolean isSingleton(String name)
+- boolean isPrototype(String name)
+2. TinyResourceLoader接口类
+- Resource getResource(String path);
+- ClassLoader getClassLoader();
+3. TinyDefaultResourceLoader实现类
+- ClassLoader classLoader
+- getResource()
+4. TinyDefaultBeanFactory实现类
+- private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<String, BeanDefinition>(256);
+- getBean()
+- Resource[] getConfigResources()
+- initBeanDefinitionReader(XmlBeanDefinitionReader reader)
+- loadBeanDefinitions(XmlBeanDefinitionReader reader)
+5. TinyXmlBeanDefinitionReader实现类
+6. TinyBeanDefinition实现类
+
